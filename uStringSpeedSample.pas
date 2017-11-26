@@ -22,6 +22,11 @@ const
 type
   TCharNumbers = array[0..WORD_LENGTH - 1] of Integer;
   TPalindromeChecker = function(const CharNumbers: TCharNumbers): Boolean;
+  TStringMaker = function(const CharNumbers: TCharNumbers): String;
+
+var
+  PalindromeCheckerFunc: TPalindromeChecker;
+  StringMakerFunc: TStringMaker;
 
 function IncCharNumber(var CharNumbers: TCharNumbers; const NumberIndex: Integer): Boolean;
 begin
@@ -48,13 +53,22 @@ begin
     CharNumbers[I] := 0;
 end;
 
-function MakeString(const CharNumbers: TCharNumbers): String;
+function MakeString_Concat(const CharNumbers: TCharNumbers): String;
 var
   Number: Integer;
 begin
   Result := '';
   for Number in CharNumbers do
     Result := Result + Char(FIRST_CHARACTER_ID + Number);
+end;
+
+function MakeString_FixedLength(const CharNumbers: TCharNumbers): String;
+var
+  I: Integer;
+begin
+  SetLength(Result, WORD_LENGTH);
+  for I := Low(CharNumbers) to High(CharNumbers) do
+    Result[I + 1] := Char(FIRST_CHARACTER_ID + CharNumbers[I]);
 end;
 
 function RevertCharNumbers(const CharNumbers: TCharNumbers): TCharNumbers;
@@ -70,9 +84,9 @@ var
   OriginString, RevertedString: String;
   RevertedCharNumbers: TCharNumbers;
 begin
-  OriginString := MakeString(CharNumbers);
+  OriginString := StringMakerFunc(CharNumbers);
   RevertedCharNumbers := RevertCharNumbers(CharNumbers);
-  RevertedString := MakeString(RevertedCharNumbers);
+  RevertedString := StringMakerFunc(RevertedCharNumbers);
   Result := OriginString = RevertedString;
 end;
 
@@ -94,20 +108,14 @@ var
   Chars: TCharNumbers;
   Ticks: LongWord;
   PalindromeCount: Integer;
-  PalindromeChecker: TPalindromeChecker;
 begin
   InitCharNumbers(Chars);
-
-  if ParamStr(1) = 'integer' then
-    PalindromeChecker := IsPalindrome_IntegerBased
-  else
-    PalindromeChecker := IsPalindrome_StringBased;
 
   PalindromeCount := 0;
   Ticks := GetTickCount;
 
   repeat
-    if PalindromeChecker(Chars) then
+    if PalindromeCheckerFunc(Chars) then
       Inc(PalindromeCount);
   until not IncCharNumber(Chars, High(Chars));
 
@@ -115,4 +123,14 @@ begin
   WriteLn(GetTickCount - Ticks, ' ticks');
 end;
 
+initialization
+  if ParamStr(1) = 'integer' then
+    PalindromeCheckerFunc := IsPalindrome_IntegerBased
+  else
+    PalindromeCheckerFunc := IsPalindrome_StringBased;
+
+  if ParamStr(2) = 'fixed' then
+    StringMakerFunc := MakeString_FixedLength
+  else
+    StringMakerFunc := MakeString_Concat;
 end.
